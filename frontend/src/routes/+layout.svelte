@@ -9,6 +9,6 @@ let { children } = $props();
 	<link rel="icon" href={favicon} />
 </svelte:head>
 
-<div class="container mx-auto">
+<div class="h-full w-full">
 	{@render children()}
 </div>
