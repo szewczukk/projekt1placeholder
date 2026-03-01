@@ -1,6 +1,6 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from typing import List
+from typing import List, Dict
 from pydantic import BaseModel
 
 class Product(BaseModel):
@@ -10,7 +10,31 @@ class Product(BaseModel):
     price: float
     quantity: int
 
-app = FastAPI(title="Shop API", description="Projekt sklepu z 4 produktami")
+class CartItem(BaseModel):
+    product_id: int
+    quantity: int
+
+class AddToCartRequest(BaseModel):
+    user_id: int
+    product_id: int
+    quantity: int
+
+app = FastAPI(
+    title="Shop API",
+    description="Projekt sklepu z 4 produktami",
+    version="1.0.0",
+    docs_url="/docs",
+    redoc_url="/redoc",
+    openapi_url="/openapi.json",
+    contact={
+        "name": "Shop API Support",
+        "email": "support@shopapi.com"
+    },
+    license_info={
+        "name": "MIT",
+        "url": "https://opensource.org/licenses/MIT"
+    }
+)
 
 app.add_middleware(
     CORSMiddleware,
@@ -51,6 +75,8 @@ products_db: List[Product] = [
     ),
 ]
 
+cart_db: Dict[int, Dict[int, int]] = {}  # {user_id: {product_id: quantity}}
+
 @app.get("/products", response_model=List[Product])
 async def get_all_products():
     """Zwraca listę wszystkich produktów w sklepie"""
@@ -82,14 +108,39 @@ async def root():
         }
     }
 
-# Endpoint: Status sklepu
-@app.get("/status")
-async def get_status():
-    """Zwraca status sklepu"""
+# Endpoint: Dodanie produktu do koszyka
+@app.post("/cart/add")
+async def add_to_cart(request: AddToCartRequest):
+    """Dodaje produkt do koszyka użytkownika"""
+    # Sprawdzenie czy produkt istnieje
+    product = None
+    for p in products_db:
+        if p.id == request.product_id:
+            product = p
+            break
+    
+    if not product:
+        raise HTTPException(status_code=404, detail="Produkt nie znaleziony")
+    
+    if request.quantity <= 0:
+        raise HTTPException(status_code=400, detail="Ilość musi być większa niż 0")
+    
+    # Inicjalizacja koszyka użytkownika jeśli nie istnieje
+    if request.user_id not in cart_db:
+        cart_db[request.user_id] = {}
+    
+    # Dodanie do koszyka lub aktualizacja ilości
+    if request.product_id in cart_db[request.user_id]:
+        cart_db[request.user_id][request.product_id] += request.quantity
+    else:
+        cart_db[request.user_id][request.product_id] = request.quantity
+    
     return {
-        "status": "online",
-        "products_available": len(products_db),
-        "total_value": sum(p.price * p.quantity for p in products_db)
+        "status": "success",
+        "message": f"Dodano {request.quantity} szt. produktu '{product.name}' do koszyka",
+        "user_id": request.user_id,
+        "product_id": request.product_id,
+        "quantity_in_cart": cart_db[request.user_id][request.product_id]
     }
 
 if __name__ == "__main__":
