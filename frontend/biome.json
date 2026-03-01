@@ -27,6 +27,21 @@
   "html": {
     "experimentalFullSupportEnabled": true
   },
+  "overrides": [
+    {
+      "includes": ["**/*.svelte", "*.svelte"],
+      "linter": {
+        "enabled": true,
+        "rules": {
+          "recommended": true,
+          "correctness": {
+            "noUnusedVariables": "off",
+            "noUnusedImports": "off"
+          }
+        }
+      }
+    }
+  ],
   "assist": {
     "enabled": true,
     "actions": {
