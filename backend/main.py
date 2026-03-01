@@ -19,6 +19,13 @@ class AddToCartRequest(BaseModel):
     product_id: int
     quantity: int
 
+class CreateSessionRequest(BaseModel):
+    user_id: int
+
+class RemoveFromCartRequest(BaseModel):
+    user_id: int
+    product_id: int
+
 app = FastAPI(
     title="Shop API",
     description="Projekt sklepu z 4 produktami",
@@ -142,6 +149,46 @@ async def add_to_cart(request: AddToCartRequest):
         "product_id": request.product_id,
         "quantity_in_cart": cart_db[request.user_id][request.product_id]
     }
+
+# Endpoint: Usunięcie produktu z koszyka
+@app.delete("/cart/remove")
+async def remove_from_cart(request: RemoveFromCartRequest):
+    """Usuwa produkt z koszyka użytkownika"""
+    if request.user_id not in cart_db:
+        raise HTTPException(status_code=404, detail="Sesja użytkownika nie znaleziona")
+    
+    if request.product_id not in cart_db[request.user_id]:
+        raise HTTPException(status_code=404, detail="Produkt nie znajduje się w koszyku")
+    
+    # Znalezienie produktu dla nazwy
+    product = None
+    for p in products_db:
+        if p.id == request.product_id:
+            product = p
+            break
+    
+    del cart_db[request.user_id][request.product_id]
+    
+    return {
+        "status": "success",
+        "message": f"Usunięto produkt '{product.name if product else 'nieznany'}' z koszyka",
+        "user_id": request.user_id,
+        "product_id": request.product_id
+    }
+
+# Endpoint: Tworzenie sesji użytkownika
+@app.post("/sessions", status_code=204)
+async def create_session(request: CreateSessionRequest):
+    """Tworzy nową sesję (koszyk) dla użytkownika"""
+    if request.user_id not in cart_db:
+        cart_db[request.user_id] = {}
+
+# Endpoint: Usunięcie sesji użytkownika
+@app.delete("/sessions/{user_id}", status_code=204)
+async def delete_session(user_id: int):
+    """Usuwa sesję (koszyk) użytkownika"""
+    if user_id in cart_db:
+        del cart_db[user_id]
 
 if __name__ == "__main__":
     import uvicorn
