@@ -6,6 +6,10 @@
 	const products = $derived(data.products as Product[]);
 </script>
 
+<svelte:head>
+	<title>Produkty | Sklep</title>
+</svelte:head>
+
 <ul class="flex gap-8">
   {#each products as product}
     <li>

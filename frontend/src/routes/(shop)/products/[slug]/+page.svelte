@@ -27,6 +27,10 @@
 	};
 </script>
 
+<svelte:head>
+	<title>{product ? `${product.name} | Sklep` : "Produkt nie znaleziony | Sklep"}</title>
+</svelte:head>
+
 {#if product}
 	<section class="bg-slate-100 px-12 py-8">
 		<div class="mb-12 flex justify-end">
