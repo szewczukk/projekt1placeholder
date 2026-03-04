@@ -1,9 +1,8 @@
 <script lang="ts">
-	import { page } from "$app/state";
-	import { products } from "$lib/constants/products";
+	import type { PageData } from "./$types";
 
-	const slug = $derived(page.params.slug);
-	const product = $derived(products.find((item) => String(item.id) === slug));
+	let { data }: { data: PageData } = $props();
+	const product = $derived(data.product);
 	let quantity = $state(1);
 
 	const incrementQuantity = () => {

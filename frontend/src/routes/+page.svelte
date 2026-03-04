@@ -1,5 +1,9 @@
 <script lang="ts">
-import { products } from "$lib/constants/products";
+	import type { Product } from "$lib/api/products";
+	import type { PageData } from "./$types";
+
+	let { data }: { data: PageData } = $props();
+	const products = $derived(data.products as Product[]);
 </script>
 
 <ul class="flex gap-8">
