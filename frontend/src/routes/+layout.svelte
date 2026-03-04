@@ -5,10 +5,6 @@ import "../app.css";
 let { children } = $props();
 </script>
 
-<svelte:head>
-	<link rel="icon" href={favicon} />
-</svelte:head>
+<svelte:head> <link rel="icon" href={favicon}> </svelte:head>
 
-<div class="h-full w-full">
-	{@render children()}
-</div>
+<div class="h-full w-full">{@render children()}</div>

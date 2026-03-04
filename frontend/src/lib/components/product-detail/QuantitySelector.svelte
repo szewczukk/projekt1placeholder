@@ -1,14 +1,16 @@
 <script lang="ts">
-	type Props = {
-		quantity: number;
-		onIncrement: () => void;
-		onDecrement: () => void;
-	};
+type Props = {
+	quantity: number;
+	onIncrement: () => void;
+	onDecrement: () => void;
+};
 
-	let { quantity, onIncrement, onDecrement }: Props = $props();
+let { quantity, onIncrement, onDecrement }: Props = $props();
 </script>
 
-<div class="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+<div
+	class="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3"
+>
 	<span class="text-sm font-semibold uppercase tracking-wide text-slate-500">Ilość</span>
 	<div class="flex items-center gap-3">
 		<button

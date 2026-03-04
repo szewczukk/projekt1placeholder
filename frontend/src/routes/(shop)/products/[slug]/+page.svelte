@@ -1,33 +1,33 @@
 <script lang="ts">
-	import ProductHeroImage from "$lib/components/product-detail/ProductHeroImage.svelte";
-	import ProductNotFound from "$lib/components/product-detail/ProductNotFound.svelte";
-	import ProductPurchaseCard from "$lib/components/product-detail/ProductPurchaseCard.svelte";
-	import type { PageData } from "./$types";
+import ProductHeroImage from "$lib/components/product-detail/ProductHeroImage.svelte";
+import ProductNotFound from "$lib/components/product-detail/ProductNotFound.svelte";
+import ProductPurchaseCard from "$lib/components/product-detail/ProductPurchaseCard.svelte";
+import type { PageData } from "./$types";
 
-	let { data }: { data: PageData } = $props();
-	const product = $derived(data.product);
-	let quantity = $state(1);
+let { data }: { data: PageData } = $props();
+const product = $derived(data.product);
+let quantity = $state(1);
 
-	const incrementQuantity = () => {
-		quantity += 1;
-	};
+const incrementQuantity = () => {
+	quantity += 1;
+};
 
-	const decrementQuantity = () => {
-		quantity = Math.max(1, quantity - 1);
-	};
+const decrementQuantity = () => {
+	quantity = Math.max(1, quantity - 1);
+};
 
-	const handleAddToCart = () => {
-		if (!product) {
-			return;
-		}
+const handleAddToCart = () => {
+	if (!product) {
+		return;
+	}
 
-		// TODO: replace with real cart store/service integration.
-		console.log("Mock add to cart", {
-			productId: product.id,
-			productName: product.name,
-			quantity,
-		});
-	};
+	// TODO: replace with real cart store/service integration.
+	console.log("Mock add to cart", {
+		productId: product.id,
+		productName: product.name,
+		quantity,
+	});
+};
 </script>
 
 <svelte:head>
@@ -35,7 +35,9 @@
 </svelte:head>
 
 {#if product}
-	<section class="min-h-screen bg-gradient-to-br from-slate-50 via-zinc-100 to-slate-200 p-6 md:p-10">
+	<section
+		class="min-h-screen bg-gradient-to-br from-slate-50 via-zinc-100 to-slate-200 p-6 md:p-10"
+	>
 		<div class="mx-auto flex w-full max-w-7xl justify-between">
 			<a
 				href="/"
@@ -51,8 +53,13 @@
 			</a>
 		</div>
 
-		<div class="mx-auto mt-6 grid min-h-[calc(100vh-9rem)] w-full max-w-7xl items-center gap-8 lg:grid-cols-[1.2fr_1fr]">
-			<ProductHeroImage name={product.name} imageUrl={`https://picsum.photos/seed/product-${product.id}/1200/1200`} />
+		<div
+			class="mx-auto mt-6 grid min-h-[calc(100vh-9rem)] w-full max-w-7xl items-center gap-8 lg:grid-cols-[1.2fr_1fr]"
+		>
+			<ProductHeroImage
+				name={product.name}
+				imageUrl={`https://picsum.photos/seed/product-${product.id}/1200/1200`}
+			/>
 			<ProductPurchaseCard
 				{product}
 				{quantity}
