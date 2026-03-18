@@ -1,5 +1,6 @@
 <script lang="ts">
 import type { Product } from "$lib/api/products";
+import CartLink from "$lib/components/CartLink.svelte";
 import type { PageData } from "./$types";
 
 let { data }: { data: PageData } = $props();
@@ -14,12 +15,7 @@ const products = $derived(data.products as Product[]);
 	class="min-h-screen bg-gradient-to-br from-slate-50 via-zinc-100 to-slate-200 p-6 md:p-10"
 >
 	<div class="mx-auto flex w-full max-w-7xl justify-end">
-		<a
-			href="/checkout"
-			class="rounded-full bg-slate-900 px-5 py-2 text-sm font-semibold text-white shadow-lg shadow-slate-900/20 transition hover:-translate-y-0.5 hover:bg-black"
-		>
-			Koszyk
-		</a>
+		<CartLink />
 	</div>
 
 	<div class="mx-auto mt-6 w-full max-w-7xl">

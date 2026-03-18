@@ -1,12 +1,17 @@
 <script lang="ts">
+import CartLink from "$lib/components/CartLink.svelte";
 import ProductHeroImage from "$lib/components/product-detail/ProductHeroImage.svelte";
 import ProductNotFound from "$lib/components/product-detail/ProductNotFound.svelte";
 import ProductPurchaseCard from "$lib/components/product-detail/ProductPurchaseCard.svelte";
+import { cart } from "$lib/stores/cart.svelte";
 import type { PageData } from "./$types";
 
 let { data }: { data: PageData } = $props();
 const product = $derived(data.product);
 let quantity = $state(1);
+
+// TODO: POST /products/{productId}/view on mount (user views product page)
+// TODO: POST /products/{productId}/leave on unmount (user leaves product page)
 
 const incrementQuantity = () => {
 	quantity += 1;
@@ -20,13 +25,8 @@ const handleAddToCart = () => {
 	if (!product) {
 		return;
 	}
-
-	// TODO: replace with real cart store/service integration.
-	console.log("Mock add to cart", {
-		productId: product.id,
-		productName: product.name,
-		quantity,
-	});
+	cart.addItem(product, quantity);
+	quantity = 1;
 };
 </script>
 
@@ -45,12 +45,7 @@ const handleAddToCart = () => {
 			>
 				Powrót do listy
 			</a>
-			<a
-				href="/checkout"
-				class="rounded-full bg-slate-900 px-5 py-2 text-sm font-semibold text-white shadow-lg shadow-slate-900/20 transition hover:-translate-y-0.5 hover:bg-black"
-			>
-				Koszyk
-			</a>
+			<CartLink />
 		</div>
 
 		<div
