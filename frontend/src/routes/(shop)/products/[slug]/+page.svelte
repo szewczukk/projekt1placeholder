@@ -1,17 +1,42 @@
 <script lang="ts">
+import { browser } from "$app/environment";
+import {
+	trackProductPageLeave,
+	trackProductPageOpen,
+} from "$lib/api/analytics";
 import CartLink from "$lib/components/CartLink.svelte";
 import ProductHeroImage from "$lib/components/product-detail/ProductHeroImage.svelte";
 import ProductNotFound from "$lib/components/product-detail/ProductNotFound.svelte";
 import ProductPurchaseCard from "$lib/components/product-detail/ProductPurchaseCard.svelte";
+import { ensureSession, getUserId } from "$lib/session";
 import { cart } from "$lib/stores/cart.svelte";
 import type { PageData } from "./$types";
 
 let { data }: { data: PageData } = $props();
 const product = $derived(data.product);
 let quantity = $state(1);
+let addToCartError = $state<string | null>(null);
 
-// TODO: POST /products/{productId}/view on mount (user views product page)
-// TODO: POST /products/{productId}/leave on unmount (user leaves product page)
+$effect(() => {
+	if (!browser) {
+		return;
+	}
+	const p = product;
+	if (!p) {
+		return;
+	}
+	let cancelled = false;
+	void ensureSession().then(() => {
+		if (cancelled) {
+			return;
+		}
+		void trackProductPageOpen(getUserId(), p.id);
+	});
+	return () => {
+		cancelled = true;
+		void trackProductPageLeave(getUserId(), p.id);
+	};
+});
 
 const incrementQuantity = () => {
 	quantity += 1;
@@ -21,12 +46,18 @@ const decrementQuantity = () => {
 	quantity = Math.max(1, quantity - 1);
 };
 
-const handleAddToCart = () => {
+const handleAddToCart = async () => {
 	if (!product) {
 		return;
 	}
-	cart.addItem(product, quantity);
-	quantity = 1;
+	addToCartError = null;
+	try {
+		await cart.addItem(product, quantity);
+		quantity = 1;
+	} catch (e) {
+		addToCartError =
+			e instanceof Error ? e.message : "Nie udało się dodać do koszyka.";
+	}
 };
 </script>
 
@@ -61,6 +92,7 @@ const handleAddToCart = () => {
 				onIncrement={incrementQuantity}
 				onDecrement={decrementQuantity}
 				onAddToCart={handleAddToCart}
+				addToCartError={addToCartError}
 			/>
 		</div>
 	</section>

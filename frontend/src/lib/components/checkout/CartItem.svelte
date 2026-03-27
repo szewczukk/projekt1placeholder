@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { cart, type CartItem } from "$lib/stores/cart.svelte";
+	import { type CartItem, cart } from "$lib/stores/cart.svelte";
 
 	let { item }: { item: CartItem } = $props();
 </script>
@@ -28,7 +28,7 @@
 					<button
 						type="button"
 						class="h-8 w-8 rounded-lg bg-white text-lg font-semibold text-slate-700 shadow ring-1 ring-slate-200 transition hover:bg-slate-100 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-						onclick={() => cart.updateQuantity(item.product.id, item.quantity - 1)}
+						onclick={() => void cart.updateQuantity(item.product.id, item.quantity - 1)}
 						disabled={item.quantity <= 1}
 						aria-label="Zmniejsz ilość"
 					>
@@ -40,7 +40,7 @@
 					<button
 						type="button"
 						class="h-8 w-8 rounded-lg bg-white text-lg font-semibold text-slate-700 shadow ring-1 ring-slate-200 transition hover:bg-slate-100 cursor-pointer"
-						onclick={() => cart.updateQuantity(item.product.id, item.quantity + 1)}
+						onclick={() => void cart.updateQuantity(item.product.id, item.quantity + 1)}
 						aria-label="Zwiększ ilość"
 					>
 						+
@@ -49,7 +49,7 @@
 				<button
 					type="button"
 					class="rounded-xl border border-red-200 bg-white p-2 text-red-600 transition hover:bg-red-50 hover:border-red-300 cursor-pointer"
-					onclick={() => cart.removeItem(item.product.id)}
+					onclick={() => void cart.removeItem(item.product.id)}
 					aria-label="Usuń z koszyka"
 					title="Usuń z koszyka"
 				>
@@ -60,6 +60,8 @@
 						viewBox="0 0 24 24"
 						stroke="currentColor"
 						stroke-width="2"
+						aria-hidden="true"
+						focusable="false"
 					>
 						<path
 							stroke-linecap="round"

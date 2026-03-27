@@ -1,4 +1,4 @@
-import { env } from "$env/dynamic/public";
+import { getApiBaseUrl } from "$lib/api/config";
 
 export type Product = {
 	id: number;
@@ -7,8 +7,6 @@ export type Product = {
 	price: number;
 	quantity: number;
 };
-
-const API_BASE_URL = env.PUBLIC_API_BASE_URL || "http://localhost:8000";
 
 const isProduct = (value: unknown): value is Product => {
 	if (!value || typeof value !== "object") {
@@ -28,7 +26,7 @@ const isProduct = (value: unknown): value is Product => {
 
 // TODO: Add image field to the product and display it in the UI
 export const getProducts = async (fetchFn: typeof fetch): Promise<Product[]> => {
-	const response = await fetchFn(`${API_BASE_URL}/products`);
+	const response = await fetchFn(`${getApiBaseUrl()}/products`);
 
 	if (!response.ok) {
 		throw new Error(`Nie udało się pobrać produktów (${response.status})`);

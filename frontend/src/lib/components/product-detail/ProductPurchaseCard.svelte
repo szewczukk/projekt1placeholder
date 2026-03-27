@@ -7,10 +7,18 @@ type Props = {
 	quantity: number;
 	onIncrement: () => void;
 	onDecrement: () => void;
-	onAddToCart: () => void;
+	onAddToCart: () => void | Promise<void>;
+	addToCartError?: string | null;
 };
 
-let { product, quantity, onIncrement, onDecrement, onAddToCart }: Props = $props();
+let {
+	product,
+	quantity,
+	onIncrement,
+	onDecrement,
+	onAddToCart,
+	addToCartError = null,
+}: Props = $props();
 </script>
 
 <article class="rounded-3xl bg-white p-8 shadow-2xl ring-1 ring-slate-200 md:p-10">
@@ -27,6 +35,11 @@ let { product, quantity, onIncrement, onDecrement, onAddToCart }: Props = $props
 	</p>
 
 	<div class="mt-8 flex flex-col gap-4">
+		{#if addToCartError}
+			<p class="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-800 ring-1 ring-red-200">
+				{addToCartError}
+			</p>
+		{/if}
 		<QuantitySelector {quantity} {onIncrement} {onDecrement} />
 		<button
 			type="button"
