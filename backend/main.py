@@ -1,7 +1,12 @@
+from datetime import datetime, timezone
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from typing import List, Dict
 from pydantic import BaseModel
+
+
+def _utc_now_iso() -> str:
+    return datetime.now(timezone.utc).isoformat()
 
 class Product(BaseModel):
     id: int
@@ -42,6 +47,10 @@ class CheckoutResponse(BaseModel):
     items: List[CheckoutLineItem]
     total: float
     message: str
+
+class ProductPageTrackRequest(BaseModel):
+    user_id: int
+    product_id: int
 
 app = FastAPI(
     title="Shop API",
@@ -101,6 +110,8 @@ products_db: List[Product] = [
 
 cart_db: Dict[int, Dict[int, int]] = {}  # {user_id: {product_id: quantity}}
 order_id_counter: int = 0
+product_page_open_events: List[Dict] = []
+product_page_leave_events: List[Dict] = []
 
 @app.get("/products", response_model=List[Product])
 async def get_all_products():
@@ -130,8 +141,52 @@ async def root():
             "all_products": "/products",
             "product_by_id": "/products/{product_id}",
             "products_count": "/products/count",
-            "cart_checkout": "/cart/checkout"
+            "cart_checkout": "/cart/checkout",
+            "product_page_open": "/analytics/product-page/open",
+            "product_page_leave": "/analytics/product-page/leave",
         }
+    }
+
+
+def _product_exists(product_id: int) -> bool:
+    return any(p.id == product_id for p in products_db)
+
+
+# Endpoint: Śledzenie wejścia na stronę produktu
+@app.post("/analytics/product-page/open")
+async def track_product_page_open(request: ProductPageTrackRequest):
+    """Rejestruje, że użytkownik otworzył stronę produktu."""
+    if not _product_exists(request.product_id):
+        raise HTTPException(status_code=404, detail="Produkt nie znaleziony")
+    event = {
+        "user_id": request.user_id,
+        "product_id": request.product_id,
+        "at": _utc_now_iso(),
+    }
+    product_page_open_events.append(event)
+    return {
+        "status": "success",
+        "message": "Zarejestrowano otwarcie strony produktu",
+        **event,
+    }
+
+
+# Endpoint: Śledzenie opuszczenia strony produktu
+@app.post("/analytics/product-page/leave")
+async def track_product_page_leave(request: ProductPageTrackRequest):
+    """Rejestruje, że użytkownik opuścił stronę produktu."""
+    if not _product_exists(request.product_id):
+        raise HTTPException(status_code=404, detail="Produkt nie znaleziony")
+    event = {
+        "user_id": request.user_id,
+        "product_id": request.product_id,
+        "at": _utc_now_iso(),
+    }
+    product_page_leave_events.append(event)
+    return {
+        "status": "success",
+        "message": "Zarejestrowano opuszczenie strony produktu",
+        **event,
     }
 
 # Endpoint: Realizacja zamówienia (checkout koszyka)
