@@ -26,6 +26,23 @@ class RemoveFromCartRequest(BaseModel):
     user_id: int
     product_id: int
 
+class CheckoutRequest(BaseModel):
+    user_id: int
+
+class CheckoutLineItem(BaseModel):
+    product_id: int
+    name: str
+    quantity: int
+    unit_price: float
+    subtotal: float
+
+class CheckoutResponse(BaseModel):
+    order_id: int
+    user_id: int
+    items: List[CheckoutLineItem]
+    total: float
+    message: str
+
 app = FastAPI(
     title="Shop API",
     description="Projekt sklepu z 4 produktami",
@@ -83,6 +100,7 @@ products_db: List[Product] = [
 ]
 
 cart_db: Dict[int, Dict[int, int]] = {}  # {user_id: {product_id: quantity}}
+order_id_counter: int = 0
 
 @app.get("/products", response_model=List[Product])
 async def get_all_products():
@@ -111,9 +129,67 @@ async def root():
         "endpoints": {
             "all_products": "/products",
             "product_by_id": "/products/{product_id}",
-            "products_count": "/products/count"
+            "products_count": "/products/count",
+            "cart_checkout": "/cart/checkout"
         }
     }
+
+# Endpoint: Realizacja zamówienia (checkout koszyka)
+@app.post("/cart/checkout", response_model=CheckoutResponse)
+async def checkout_cart(request: CheckoutRequest):
+    """Realizuje zamówienie: sprawdza stany magazynowe, pomniejsza ilości, czyści koszyk."""
+    if request.user_id not in cart_db or not cart_db[request.user_id]:
+        raise HTTPException(status_code=400, detail="Koszyk jest pusty")
+
+    cart = cart_db[request.user_id]
+    product_by_id = {p.id: p for p in products_db}
+
+    for product_id, qty in cart.items():
+        if product_id not in product_by_id:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Produkt o id={product_id} nie istnieje — usuń go z koszyka",
+            )
+        product = product_by_id[product_id]
+        if product.quantity < qty:
+            raise HTTPException(
+                status_code=409,
+                detail=(
+                    f"Niewystarczający stan magazynowy dla „{product.name}”: "
+                    f"dostępne {product.quantity}, w koszyku {qty}"
+                ),
+            )
+
+    global order_id_counter
+    order_id_counter += 1
+    line_items: List[CheckoutLineItem] = []
+    total = 0.0
+
+    for product_id, qty in cart.items():
+        product = product_by_id[product_id]
+        product.quantity -= qty
+        subtotal = round(product.price * qty, 2)
+        total += subtotal
+        line_items.append(
+            CheckoutLineItem(
+                product_id=product_id,
+                name=product.name,
+                quantity=qty,
+                unit_price=product.price,
+                subtotal=subtotal,
+            )
+        )
+
+    total = round(total, 2)
+    cart_db[request.user_id] = {}
+
+    return CheckoutResponse(
+        order_id=order_id_counter,
+        user_id=request.user_id,
+        items=line_items,
+        total=total,
+        message="Zamówienie zrealizowane pomyślnie",
+    )
 
 # Endpoint: Dodanie produktu do koszyka
 @app.post("/cart/add")
