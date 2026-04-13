@@ -1,12 +1,13 @@
 <script lang="ts">
 import { onMount } from "svelte";
 import favicon from "$lib/assets/favicon.svg";
-import { ensureSession } from "$lib/session";
+import { ensureSession, ensureSessionIdInUrl } from "$lib/session";
 import "../app.css";
 
 let { children } = $props();
 
 onMount(() => {
+	ensureSessionIdInUrl();
 	void ensureSession();
 });
 </script>
