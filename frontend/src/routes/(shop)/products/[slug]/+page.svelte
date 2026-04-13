@@ -14,8 +14,24 @@ import type { PageData } from "./$types";
 
 let { data }: { data: PageData } = $props();
 const product = $derived(data.product);
+const inCartQty = $derived(
+	product ? (cart.getItem(product.id)?.quantity ?? 0) : 0,
+);
+const maxSelectableInBatch = $derived(
+	product ? Math.max(0, product.quantity - inCartQty) : 0,
+);
 let quantity = $state(1);
 let addToCartError = $state<string | null>(null);
+
+$effect(() => {
+	const max = maxSelectableInBatch;
+	if (max <= 0) {
+		return;
+	}
+	if (quantity > max) {
+		quantity = max;
+	}
+});
 
 $effect(() => {
 	if (!browser) {
@@ -39,7 +55,10 @@ $effect(() => {
 });
 
 const incrementQuantity = () => {
-	quantity += 1;
+	if (maxSelectableInBatch <= 0) {
+		return;
+	}
+	quantity = Math.min(maxSelectableInBatch, quantity + 1);
 };
 
 const decrementQuantity = () => {
@@ -89,6 +108,7 @@ const handleAddToCart = async () => {
 			<ProductPurchaseCard
 				{product}
 				{quantity}
+				{maxSelectableInBatch}
 				onIncrement={incrementQuantity}
 				onDecrement={decrementQuantity}
 				onAddToCart={handleAddToCart}

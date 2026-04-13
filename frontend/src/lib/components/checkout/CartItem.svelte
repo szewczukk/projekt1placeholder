@@ -39,8 +39,9 @@
 					</span>
 					<button
 						type="button"
-						class="h-8 w-8 rounded-lg bg-white text-lg font-semibold text-slate-700 shadow ring-1 ring-slate-200 transition hover:bg-slate-100 cursor-pointer"
+						class="h-8 w-8 rounded-lg bg-white text-lg font-semibold text-slate-700 shadow ring-1 ring-slate-200 transition hover:bg-slate-100 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
 						onclick={() => void cart.updateQuantity(item.product.id, item.quantity + 1)}
+						disabled={item.quantity >= item.product.quantity}
 						aria-label="Zwiększ ilość"
 					>
 						+

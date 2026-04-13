@@ -9,6 +9,7 @@ type Props = {
 	onDecrement: () => void;
 	onAddToCart: () => void | Promise<void>;
 	addToCartError?: string | null;
+	maxSelectableInBatch: number;
 };
 
 let {
@@ -18,6 +19,7 @@ let {
 	onDecrement,
 	onAddToCart,
 	addToCartError = null,
+	maxSelectableInBatch,
 }: Props = $props();
 </script>
 
@@ -40,11 +42,27 @@ let {
 				{addToCartError}
 			</p>
 		{/if}
-		<QuantitySelector {quantity} {onIncrement} {onDecrement} />
+		{#if maxSelectableInBatch <= 0}
+			<p class="rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-900 ring-1 ring-amber-200">
+				{#if product.quantity <= 0}
+					Brak towaru na magazynie.
+				{:else}
+					Masz już w koszyku cały dostępny stan ({product.quantity} szt.).
+				{/if}
+			</p>
+		{/if}
+		<QuantitySelector
+			{quantity}
+			{onIncrement}
+			{onDecrement}
+			disableDecrement={quantity <= 1 || maxSelectableInBatch <= 0}
+			disableIncrement={quantity >= maxSelectableInBatch || maxSelectableInBatch <= 0}
+		/>
 		<button
 			type="button"
-			class="inline-flex items-center justify-center rounded-2xl bg-slate-900 px-6 py-4 text-lg font-semibold text-white shadow-lg shadow-slate-900/30 transition hover:-translate-y-0.5 hover:bg-black cursor-pointer"
+			class="inline-flex items-center justify-center rounded-2xl bg-slate-900 px-6 py-4 text-lg font-semibold text-white shadow-lg shadow-slate-900/30 transition hover:-translate-y-0.5 hover:bg-black cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
 			onclick={onAddToCart}
+			disabled={maxSelectableInBatch <= 0}
 		>
 			Dodaj do koszyka
 		</button>

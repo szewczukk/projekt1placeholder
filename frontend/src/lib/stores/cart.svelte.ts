@@ -34,9 +34,21 @@ class CartState {
 		if (quantity <= 0) {
 			return;
 		}
+		if (product.quantity <= 0) {
+			throw new Error("Ten produkt jest niedostępny.");
+		}
 		await ensureSession();
 		const userId = getUserId();
 		const existing = this._items[product.id];
+		const currentQty = existing?.quantity ?? 0;
+		if (currentQty + quantity > product.quantity) {
+			const canAdd = product.quantity - currentQty;
+			throw new Error(
+				canAdd <= 0
+					? `W koszyku jest już maksymalna dostępna ilość (${product.quantity} szt.).`
+					: `Możesz dodać jeszcze co najwyżej ${canAdd} szt. (dostępnych łącznie ${product.quantity}).`,
+			);
+		}
 		const previous: CartItem | undefined = existing ? { ...existing } : undefined;
 		if (existing) {
 			this._items[product.id] = { ...existing, quantity: existing.quantity + quantity };
@@ -70,6 +82,11 @@ class CartState {
 		const oldQty = item.quantity;
 		if (quantity === oldQty) {
 			return;
+		}
+		if (quantity > item.product.quantity) {
+			throw new Error(
+				`Maksymalna ilość w koszyku to ${item.product.quantity} szt. (stan magazynowy).`,
+			);
 		}
 		if (quantity > oldQty) {
 			const delta = quantity - oldQty;
