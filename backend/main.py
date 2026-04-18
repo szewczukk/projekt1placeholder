@@ -85,7 +85,7 @@ app.add_middleware(
 products_db: List[Product] = [
     Product(
         id=1,
-        name="Laptop",
+        name="laptop",
         description="Nowoczesny laptop z procesorem Intel i7",
         price=3999.99,
         quantity=5
