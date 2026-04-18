@@ -8,6 +8,13 @@ from sklearn.metrics import mean_squared_error, mean_absolute_percentage_error
 df = pd.read_csv("product_prices.csv")
 
 X = df.drop("price", axis=1)
+
+X_in_basket = X["in_basket"]
+X_in_stock = X["in_stock"]
+
+X["coverage"] = X_in_basket / X_in_stock
+X.drop(columns=["in_basket", "in_stock"], inplace=True)
+
 y = df["price"]
 X_new = pd.get_dummies(X, drop_first=False)
 

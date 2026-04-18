@@ -14,17 +14,16 @@ X = pickle_data["X_base"]
 
 
 def get_prediction(product: ProductCurrent):
-    product_data = [product.current_demand, product.current_stock, 0, 0, 0, 0]
+    product_data = [product.current_demand/product.current_stock, 0, 0, 0, 0]
+    column_order = list()
+    column_names = ["product_" + prd.value for prd in ProductName]
 
-    match(product.name):
-        case ProductName.KEYBOARD.value:
-            product_data[2] = 1
-        case ProductName.LAPTOP.value:
-            product_data[3] = 1
-        case ProductName.SCREEN.value:
-            product_data[4] = 1
-        case ProductName.MOUSE.value:
-            product_data[5] = 1
+    for column in X.columns:
+        if column in column_names:
+            column_order.append(column)
+
+    column_id = column_order.index("product_" + product.name)
+    product_data[column_id+1] = 1
 
     X.loc[0] = product_data
     predicted = model.predict(X)

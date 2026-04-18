@@ -28,10 +28,18 @@ sns.heatmap(df.corr(numeric_only=True), annot=True)
 plt.show()
 
 with open("model.pkl", "rb") as file:
-    model = pickle.load(file)
+    pickle_data = pickle.load(file)
+
+model = pickle_data["model"]
 
 X = df.drop("price", axis=1)
-X_new = pd.get_dummies(X, drop_first=True)
+X_in_basket = X["in_basket"]
+X_in_stock = X["in_stock"]
+
+X["coverage"] = X_in_basket / X_in_stock
+X.drop(columns=["in_basket", "in_stock"], inplace=True)
+
+X_new = pd.get_dummies(X, drop_first=False)
 feature_imp = model.feature_importances_
 feature = X_new.columns
 

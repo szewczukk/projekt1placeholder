@@ -32,9 +32,9 @@ laptop = Product(
     name=ProductName.LAPTOP,
     base_price=3999.99,
     base_at_zero_dem=0.8,
-    base_at_half_dem=0.95,
+    base_at_half_dem=0.9,
     base_st_dev=100,
-    st_dev_at_zero_dem=0.5
+    st_dev_at_zero_dem=0.1
 )
 
 mouse = Product(

@@ -15,7 +15,7 @@ def generate_point(demand: int, max_stock: int, base_price: float,
 
     dev_factor = 2 * (1 - st_dev_at_zero_dem)
     deviation = (stock_coverage * base_st_dev * dev_factor + \
-                 st_dev_at_zero_dem) * np.random.standard_normal()
+                 st_dev_at_zero_dem) * np.random.standard_normal() * 0.2
 
     final_price = (base_price * multiplier) + deviation
     return final_price
