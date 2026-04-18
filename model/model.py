@@ -1,11 +1,14 @@
 import pickle
 import warnings
+import os
 
 from .product_presets import ProductCurrent, ProductName
 
 warnings.filterwarnings("ignore")
 
-with open("model.pkl", "rb") as file:
+# Ścieżka do model.pkl względem katalogu model/
+model_path = os.path.join(os.path.dirname(__file__), '..', 'model.pkl')
+with open(model_path, "rb") as file:
     pickle_data = pickle.load(file)
 
 model = pickle_data["model"]
