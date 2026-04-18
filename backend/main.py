@@ -1,8 +1,13 @@
 from datetime import datetime, timezone
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from typing import List, Dict
+from typing import List, Dict, Set
 from pydantic import BaseModel
+import sys
+import os
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+from model.model import get_prediction
+from model.product_presets import ProductCurrent
 
 
 def _utc_now_iso() -> str:
@@ -110,21 +115,47 @@ products_db: List[Product] = [
 
 cart_db: Dict[int, Dict[int, int]] = {}  # {user_id: {product_id: quantity}}
 order_id_counter: int = 0
-product_page_open_events: List[Dict] = []
-product_page_leave_events: List[Dict] = []
+active_sessions: Dict[int, Set[int]] = {}  # {user_id: set(product_ids)} - aktualnie otwarte strony produktów
+
+def _compute_dynamic_price(product: Product) -> float:
+    # Oblicz liczbę otwartych sesji na stronie produktu (bez użytkowników którzy mają produkt w koszyku)
+    open_sessions = 0
+    for user_id, open_products in active_sessions.items():
+        if product.id in open_products:
+            # Sprawdź czy użytkownik ma ten produkt w koszyku
+            user_cart = cart_db.get(user_id, {})
+            has_in_cart = product.id in user_cart and user_cart[product.id] > 0
+            if not has_in_cart:
+                open_sessions += 1
+    
+    # Oblicz popyt z koszyków
+    cart_demand = 0
+    for user_cart in cart_db.values():
+        cart_demand += user_cart.get(product.id, 0)
+    
+    # Łączny popyt = otwarte sesje + produkty w koszykach
+    total_demand = open_sessions + cart_demand
+
+    product_current = ProductCurrent(
+        name=product.name,
+        current_demand=total_demand,
+        current_stock=product.quantity,
+    )
+    predicted_price = get_prediction(product_current)
+    return round(float(predicted_price), 2)
 
 @app.get("/products", response_model=List[Product])
 async def get_all_products():
     """Zwraca listę wszystkich produktów w sklepie"""
-    return products_db
+    return [product.copy(update={"price": _compute_dynamic_price(product)}) for product in products_db]
 
 @app.get("/products/{product_id}", response_model=Product)
 async def get_product(product_id: int):
     """Zwraca informacje o konkretnym produkcie"""
     for product in products_db:
         if product.id == product_id:
-            return product
-    return {"error": "Produkt nie znaleziony"}
+            return product.copy(update={"price": _compute_dynamic_price(product)})
+    raise HTTPException(status_code=404, detail="Produkt nie znaleziony")
 
 @app.get("/products/count")
 async def get_products_count():
@@ -158,12 +189,19 @@ async def track_product_page_open(request: ProductPageTrackRequest):
     """Rejestruje, że użytkownik otworzył stronę produktu."""
     if not _product_exists(request.product_id):
         raise HTTPException(status_code=404, detail="Produkt nie znaleziony")
+    
+    # Inicjalizuj set dla użytkownika jeśli nie istnieje
+    if request.user_id not in active_sessions:
+        active_sessions[request.user_id] = set()
+    
+    # Dodaj produkt do otwartych sesji
+    active_sessions[request.user_id].add(request.product_id)
+    
     event = {
         "user_id": request.user_id,
         "product_id": request.product_id,
         "at": _utc_now_iso(),
     }
-    product_page_open_events.append(event)
     return {
         "status": "success",
         "message": "Zarejestrowano otwarcie strony produktu",
@@ -177,12 +215,20 @@ async def track_product_page_leave(request: ProductPageTrackRequest):
     """Rejestruje, że użytkownik opuścił stronę produktu."""
     if not _product_exists(request.product_id):
         raise HTTPException(status_code=404, detail="Produkt nie znaleziony")
+    
+    # Usuń produkt z otwartych sesji jeśli istnieje
+    if request.user_id in active_sessions and request.product_id in active_sessions[request.user_id]:
+        active_sessions[request.user_id].remove(request.product_id)
+        
+        # Jeśli użytkownik nie ma już otwartych produktów, usuń jego wpis
+        if not active_sessions[request.user_id]:
+            del active_sessions[request.user_id]
+    
     event = {
         "user_id": request.user_id,
         "product_id": request.product_id,
         "at": _utc_now_iso(),
     }
-    product_page_leave_events.append(event)
     return {
         "status": "success",
         "message": "Zarejestrowano opuszczenie strony produktu",
